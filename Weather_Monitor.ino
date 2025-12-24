@@ -30,6 +30,7 @@ float temperatureAHT, humidity; //AHT20
 float temperatureBMP, pressure, seaLevelPressure,altitude; //BMP280
 int digitalRainValue, analogRainValue; //FC-37 Rain Sensor
 String formattedTime; //DS3231
+String weatherStatus;
 unsigned long lastUpdate = 0;
 
 void setup() {
@@ -80,7 +81,7 @@ void loop() {
 
 void header(){
   Serial.println("===============================");
-  Serial.println("=         Title Card          =");
+  Serial.println("=       WEATHER MONITOR       =");
   Serial.println("===============================");
 }
 
@@ -153,6 +154,10 @@ void DS3231() {
   Serial.println(formattedTime);
 }
 
+void weather(){
+  //work in progress
+}
+
 void display() {
   tft.fillScreen(ST77XX_BLACK);
   tft.setCursor(0, 0);
@@ -219,6 +224,8 @@ void display() {
   tft.println(analogRainValue, 1);
 }
 
-
+void buzzer(){
+  //work in progress
+}
 
 
