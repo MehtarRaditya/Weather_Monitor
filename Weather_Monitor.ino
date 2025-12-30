@@ -47,11 +47,6 @@ void setup() {
     while (1);
   }
 
-  if (rtc.lostPower()) {
-    Serial.println("RTC lost power, setting time");
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-  }
-
   pinMode(buzzer, OUTPUT);
   digitalWrite(buzzer, LOW);
 
@@ -224,7 +219,7 @@ void display() {
   tft.println(analogRainValue, 1);
 }
 
-void buzzer(){
+void alert(){
   //work in progress
 }
 
