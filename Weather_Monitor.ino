@@ -31,53 +31,87 @@ float temperatureBMP, pressure, seaLevelPressure,altitude; //BMP280
 int digitalRainValue, analogRainValue; //FC-37 Rain Sensor
 String formattedTime; //DS3231
 String weatherStatus;
-unsigned long lastUpdate = 0;
+String conditionStatus = "";
+unsigned long lastSensorUpdate = 0;
+unsigned long lastDisplayUpdate = 0;
+unsigned long lastBuzzerMillis= 0;
+float avgTemp = (temperatureAHT + temperatureBMP) / 2.0;
 
 void setup() {
   Serial.begin(9600);
   SPI.begin();
   Wire.begin();
 
-  lightMeter.begin();
-  aht.begin();
-  bmp.begin();
-
-  if (!rtc.begin()) {
-    Serial.println("RTC not found!");
-    while (1);
-  }
-
-  pinMode(buzzer, OUTPUT);
-  digitalWrite(buzzer, LOW);
+  pinMode(rainDigital, INPUT);
+  pinMode(rainAnalog, INPUT);
 
   tft.init(240, 240, SPI_MODE3);
   tft.setRotation(2);
   tft.fillScreen(ST77XX_BLACK);
   tft.setTextWrap(false);
 
+  check();
+
+  pinMode(buzzer, OUTPUT);
+  digitalWrite(buzzer, LOW);
+
   display();
 }
 
 void loop() {
-  header();
-  DS3231();
-  BH1750();
-  AHT20();
-  BMP280();
-  FC37();
-  
-  if (millis() - lastUpdate >= 10000) {
-    lastUpdate = millis();
-    display();
+  unsigned long now = millis();
+
+  if (now - lastSensorUpdate >= 1000) {
+    lastSensorUpdate = now;
+
+    header();
+    DS3231();
+    BH1750();
+    AHT20();
+    BMP280();
+    FC37();
   }
 
+  if (now - lastDisplayUpdate >= 10000) {
+    lastDisplayUpdate = now;
+    display();
+  }
+  
   Serial.println();
 }
+
 
 void header(){
   Serial.println("===============================");
   Serial.println("=       WEATHER MONITOR       =");
   Serial.println("===============================");
+}
+
+void check(){
+  tft.fillScreen(ST77XX_BLACK);
+  tft.setTextColor(ST77XX_WHITE);
+  tft.setTextSize(2);
+  tft.setCursor(10, 10);
+
+  if (!lightMeter.begin()) {
+    tft.println("BH1750 not found!");
+  }
+  if (!aht.begin()){
+    tft.println("AHT20 not found!");
+  }
+  if (!bmp.begin()) {
+    tft.println("BMP280 not found!");
+  }
+  if (!rtc.begin()) { 
+    tft.println("RTC not found!"); 
+  }
+
+  tft.println("BH1750 OK");
+  tft.println("AHT20 OK");
+  tft.println("BMP280 OK");
+  tft.println("RTC OK");
+
+  delay(5000);
 }
 
 void BH1750() {
@@ -149,8 +183,48 @@ void DS3231() {
   Serial.println(formattedTime);
 }
 
-void weather(){
-  //work in progress
+void weather() {
+  if (analogRainValue < 500) {
+    weatherStatus = "Rain / Hujan";
+  } 
+  else {
+    if (lux >= 7000) {
+      weatherStatus = "Sweltering/Terik";
+    }
+    else if (lux >= 5000 && lux < 7000) {
+      weatherStatus = "Clear / Cerah";
+    }
+    else if (lux >= 1000 && lux < 5000) {
+      weatherStatus = "Cloudy / Berawan";
+    }
+    else {
+      weatherStatus = "Overcast / Mendung";
+    }
+  }
+  Serial.print("Weather Status: ");
+  Serial.println(weatherStatus);
+}
+
+void condition() {
+  if (analogRainValue < 500) {
+    conditionStatus = " - ";
+  } 
+  else {
+    if (avgTemp > 33) {
+      conditionStatus = "Danger / Bahaya";
+    }
+    else if (avgTemp > 29 && humidity > 70) {
+      conditionStatus = "Hot / Panas";
+    }
+    else if (avgTemp < 22) {
+      conditionStatus = "Cold / Dingin";
+    }
+    else {
+      conditionStatus = "Pleasant/Nyaman";
+    }
+  }
+  Serial.print("Information: ");
+  Serial.println(conditionStatus);
 }
 
 void display() {
@@ -158,7 +232,6 @@ void display() {
   tft.setCursor(0, 0);
   tft.setTextColor(ST77XX_WHITE);
   tft.setTextSize(2);
-
   tft.println("== WEATHER MONITOR ==");
   tft.println();
 
@@ -186,7 +259,6 @@ void display() {
   tft.print("Temperature : ");
   tft.print(temperatureAHT, 1);
   tft.println(" C");
-
   tft.print("Humidity  : ");
   tft.print(humidity, 1);
   tft.println(" %");
@@ -199,7 +271,6 @@ void display() {
   tft.print("Temperature : ");
   tft.print(temperatureBMP, 1);
   tft.println(" C");
-
   tft.print("Pressure : ");
   tft.print(pressure, 1);
   tft.println(" hPa");
@@ -217,10 +288,31 @@ void display() {
   tft.println(digitalRainValue, 1);
   tft.print("Analog Value: ");
   tft.println(analogRainValue, 1);
+
+  //Condition Analysis
+  tft.setTextColor(ST77XX_ORANGE);
+  tft.println("Status: ");
+  tft.setTextSize(1);
+  tft.setTextColor(ST77XX_WHITE);
+  tft.println(weatherStatus);
+  tft.println(conditionStatus);
 }
 
 void alert(){
-  //work in progress
+  unsigned long now = millis();
+
+  if (analogRainValue < 500) {
+    digitalWrite(buzzer, HIGH);
+  }
+  else if (lux <= 1000) {
+    if (now - lastBuzzerMillis >= 1000) {
+      lastBuzzerMillis = now;
+      digitalWrite(buzzer, HIGH);
+    }
+  }
+  else {
+    digitalWrite(buzzer, LOW);
+  }
 }
 
 
