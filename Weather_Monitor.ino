@@ -70,6 +70,8 @@ void loop() {
     AHT20();
     BMP280();
     FC37();
+    weather();
+    condition();
   }
 
   if (now - lastDisplayUpdate >= 10000) {
@@ -256,10 +258,10 @@ void display() {
   tft.setTextColor(ST77XX_GREEN);
   tft.println("AHT20:");
   tft.setTextColor(ST77XX_WHITE);
-  tft.print("Temperature : ");
+  tft.print("Temperature: ");
   tft.print(temperatureAHT, 1);
   tft.println(" C");
-  tft.print("Humidity  : ");
+  tft.print("Humidity: ");
   tft.print(humidity, 1);
   tft.println(" %");
   tft.println();
@@ -268,14 +270,13 @@ void display() {
   tft.setTextColor(ST77XX_MAGENTA);
   tft.println("BMP280:");
   tft.setTextColor(ST77XX_WHITE);
-  tft.print("Temperature : ");
+  tft.print("Temperature: ");
   tft.print(temperatureBMP, 1);
   tft.println(" C");
-  tft.print("Pressure : ");
+  tft.print("Pressure: ");
   tft.print(pressure, 1);
   tft.println(" hPa");
-
-  tft.print("Altitude  : ");
+  tft.print("Altitude: ");
   tft.print(altitude, 1);
   tft.println(" m");
   tft.println();
@@ -284,17 +285,20 @@ void display() {
   tft.setTextColor(ST77XX_BLUE);
   tft.println("FC-37 Rain Sensor:");
   tft.setTextColor(ST77XX_WHITE);
-  tft.print("Digital Value : ");
+  tft.print("Digital Value: ");
   tft.println(digitalRainValue, 1);
   tft.print("Analog Value: ");
   tft.println(analogRainValue, 1);
+  tft.println();
 
   //Condition Analysis
   tft.setTextColor(ST77XX_ORANGE);
-  tft.println("Status: ");
+  tft.println("Status:");
   tft.setTextSize(1);
   tft.setTextColor(ST77XX_WHITE);
+  tft.print("Weather Status: ");
   tft.println(weatherStatus);
+  tft.print("Condition: ");
   tft.println(conditionStatus);
 }
 
